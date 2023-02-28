@@ -4,6 +4,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+//+++ Why did you write a wrapper class for the SparkMax? Everything is already in the SparkMax library, specifically the setInverted method that seems to be the only reason for this
 public class SparkMax {
     private CANSparkMax maxspark;
     private RelativeEncoder encoder;

@@ -12,6 +12,9 @@ import frc.robot.Util.*;
 import frc.robot.Motor.SparkMax;
 
 import org.javatuples.Pair;
+//+++This is Alex from Team 980.  Unless asked I won't actuall make any changes to your code.  Instead I will put comments suggesting code changes or recommendations on how to do something
+//+++You will know it was me by +++ leading the line
+
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -35,7 +38,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    { // Drive initalization
+    { //+++This set of braces are unnecessary
+      // Drive initalization 
       var leftFront = new SparkMax(3, true);
       var leftBack = new SparkMax(1, true);
       var leftTop = new SparkMax(2, false);
@@ -45,14 +49,33 @@ public class Robot extends TimedRobot {
 
       DriveSide left = new DriveSide(leftFront, leftBack, leftTop);
       DriveSide right = new DriveSide(rightFront, rightBack, rightTop);
+      /*
+       * +++You are reinventing the wheel here.  Most of the classes you are writing already exist in the WPILib.
+       * MotorControllerGroup class takes multiple motors and turns them into a single item to use:
+       * MotorControllerGroup leftDrive = new MotorControllerGroup(leftTop, leftBack, leftFront);
+       * this will allow you to invert an entire side rather than individual motors.  So only invert the top motors and then use:
+       * rightDrive.setInverted(true);
+       */
+      
 
       final var HIGHGEARCONTROLLER = new PDController(300, 0);
       final var LOWGEARCONTROLLER = new PDController(300, 0);
+      /*
+       * +++There is also a PIDController class which handles all the PID stuff more efficiently than what you have
+       * PIDController lowGearController = new PIDController(300, 0, 0);
+       */
 
+      
       this.left = new DriveSidePD(left, LOWGEARCONTROLLER, HIGHGEARCONTROLLER);
       this.right = new DriveSidePD(left, LOWGEARCONTROLLER, HIGHGEARCONTROLLER);
 
       this.drive = new Drive(left, right);
+      /*
+       * +++ There is a Tank Drive setup premade as well this is the setup for it, called DifferentialDrive:
+       * DifferentialDrive drive = new DifferentialDrive(leftDrive, rightDrive);
+       * see TeleopPeriodic below for how you use this to drive the robot
+       */
+      
     }
     this.con = new PS4Controller(0);
   }
@@ -98,6 +121,28 @@ public class Robot extends TimedRobot {
         turnCurveIntensity,
         pwrCurveIntensity));
     drive.setPower(powers.getValue0(), powers.getValue1());
+    /*
+     * +++ Here is how to use the Differential Drive:
+     * drive.tankDrive(leftSpeed, rightSpeed);
+     * leftSpeed and rightSpeed take values between -1 and 1, this is what the sticks on your controller put out so it makes for a really clean and simple drive system.
+     * The right side will have to be inverted for tankDrive, which I showed above
+     * if you want to use the PID to control this, you can by making sure the output is between -1 and 1.  However, if you want to use PID to control your drive velocity
+     * you will need a feed forward in addition to the PIDController output
+     * SimpleMotorFeedforward ffLowLeft = new SimpleMotorFeedforward(ksLow, 1.0/maxVelocityLow); placed in the drive initialization area of the contructor above
+     * ksLow is a constant determining how much power it takes to overcome static friction on the wheels, I have been using .05 for that
+     * the second constant is kV and it is detemined by the max velocity of the robot (so you need a feed forward for each gear) and the top of the fraction is the absolute 
+     * value of maximum input value, which in the case of tank drive is 1 but could be any output you want to use.  
+     * You will need a feed forward for each side in each gear. To use it, this is the call:
+     * ffLowLeft.calculate(setpoint);
+     * setpoint is the value from the controller joystick from -1 to 1.  You would use it in the tank drive call:
+     * drive.tankDrive(ffLowLeft.calculate(setpoint), ffLowRight.calculate(setpoint));
+     * and if you have an output from a PID controller you would put that in too:
+     * drive.tankDrive(PIDLeftOutput + ffLowLeft.calculate(setpoint), PIDRightOutput + ffLowRight.calculate(setpoint));
+     * 
+     * If you want me to help you convert over to the WPILib version of the PIDController, let me know.  Since we use true PID control and arcade drive, the Team 980
+     * code is structured way differently so I would have to show you how to do this in your Timed Robot structure
+     */
+  
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
